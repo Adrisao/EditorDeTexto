@@ -4,7 +4,6 @@
 #include <unistd.h>
 
 // keys
-
 #define ESC 27
 #define UP_ARROW    'A'
 #define DOWN_ARROW  'B'
@@ -12,10 +11,13 @@
 #define LEFT_ARROW  'D'
 
 // bool values
-
 #define TRUE 1
 #define FALSE 0
 
+// buffer
+#define BUFFERSIZE 1023
+char buffer[BUFFESIZE + 1];
+int bufferPos = 0;
 
 // configure the terminal
 void enableRawMode(struct termios *original){
@@ -40,15 +42,27 @@ void desableRawMode(struct termios *original){
     return;
 }
 
-// print single char
-void print(char *data){
-    write(STDOUT_FILENO, data, 1);
+// print line
+void print(){
+    if (bufferPos > BUFFERSIZE) return;
+    write(STDOUT_FILENO, "\r", 1);
+    write(STDOUT_FILENO, buffer, bufferPos + 1);
+    return;
+}
+
+void addChar(char *letter){
+    if (bufferPos > BUFFERSIZE) return;
+    buffer[bufferPos] = *letter;
+    bufferPos ++;
+    buffer[bufferPos] = '\0';
     return;
 }
 
 // backspace
 void backspaceFunction(){
-    write(STDOUT_FILENO, "\b \b", 3);
+    if(bufferPos == 0) return;
+    buffer[bufferPos] = '\0';
+    bufferPos --;
     return;
 }
 
@@ -139,7 +153,10 @@ void mainloop(){
 // main funcition
 int main(){
     // start
+    buffer[0] = '\0';
+    buffer[BUFFERSIZE + 1] = '\0';
     struct termios original;
+    // enable raw
     enableRawMode(&original);
 
     // working
