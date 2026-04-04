@@ -16,7 +16,7 @@
 #define FALSE 0
 
 // buffer
-#define BUFFERSIZE 1023
+#define BUFFERSIZE 15
 char buffer[BUFFERSIZE + 1];
 int bufferSize = 0;
 
@@ -54,7 +54,7 @@ void attCursor(){
     return;
 }
 
-// move the letters
+// move the letters for inserction
 void mov(){
     if (bufferSize == BUFFERSIZE) return;
     for (int i = bufferSize; i > cursorPositionX; i--) buffer[i] = buffer[i - 1];
@@ -62,11 +62,21 @@ void mov(){
     return;
 }
 
-// move back the letters
+// move back the letters to remove (backspace)
 void movBack(){
     if (bufferSize == 0) return;
     int i;
     for (i = cursorPositionX - 1; i < bufferSize; i++) buffer[i] = buffer[i+1];
+    bufferSize --;
+    buffer[bufferSize] = '\0';
+    return;
+}
+
+// move back the letters to remove (DEL)
+void delMovBack(){
+    if (bufferSize == 0) return;
+    int i;
+    for (i = cursorPositionX; i < bufferSize; i++) buffer[i] = buffer[i+1];
     bufferSize --;
     buffer[bufferSize] = '\0';
     return;
@@ -103,6 +113,7 @@ char readKey(char *key){
     return read(STDIN_FILENO, key, 1);
 }
 
+// arrows and others keys
 void arrows(){
     char seq;
     // get the next char of sequence
@@ -119,7 +130,7 @@ void arrows(){
         break;
     // right arrow
     case RIGHT_ARROW:
-        if (buffer[cursorPositionX] == '\0') break;
+        if (cursorPositionX >= bufferSize) break;
         if (cursorPositionX >= 100) break;
         cursorPositionX ++;
         attCursor();
@@ -129,6 +140,17 @@ void arrows(){
         if (cursorPositionX == 0) break;
         cursorPositionX --;
         attCursor();
+        break;
+        //DEL key
+    case '3':
+        isValid = readKey(&seq);
+        if (isValid != 1) return;
+        if (seq == '~'){
+            if(cursorPositionX == bufferSize) break;
+           delMovBack();
+           print();
+           attCursor();
+        }
         break;
         // error or other key not implemented yet
     default:
