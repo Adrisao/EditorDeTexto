@@ -34,17 +34,18 @@ void readKey(){
     char letter; // the main char
     char doWrite = 1; // if I should write
     char keepIt = 1; // continue te loop
+    int isValid; // if the key is valid
     // main loop
     do{
         // reset
         doWrite = 1;
-        letter = -1;
 
         // read the main char
-        read(STDIN_FILENO, &letter, 1);
+        isValid = read(STDIN_FILENO, &letter, 1);
 
         // if it's a valid char
-        if (letter == -1) continue;
+        if (isValid == 0) continue;
+        if (isValid == -1) break;
 
         // backspace
         if(letter == 8 || letter == 127){
@@ -56,11 +57,12 @@ void readKey(){
         //arrows and esc
         if (letter == 27){
             doWrite = 0;
-            seq = -1;
             // read the sequence
-            read(STDIN_FILENO, &seq, 1);
+            isValid = read(STDIN_FILENO, &seq, 1);
             // if it's just the esc
-            if (seq == -1){keepIt = 0; continue;}
+            if (isValid == 0){keepIt = 0; continue;} // break the program
+            if (isValid == -1) break;
+
             // if it's not the esc
             if (seq == '['){
                 // get the next char of sequence
