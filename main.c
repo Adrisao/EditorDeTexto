@@ -168,5 +168,7 @@ int main(){
 
     //end
     desableRawMode(&original);
+
+    printf("\n - BUFFER: %s", buffer);
     return 0;
 }
