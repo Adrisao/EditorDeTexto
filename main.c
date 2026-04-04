@@ -3,6 +3,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
 
 // keys
 #define ESC 27
@@ -10,18 +11,28 @@
 #define DOWN_ARROW  'B'
 #define RIGHT_ARROW 'C'
 #define LEFT_ARROW  'D'
+#define ENTER1      '\n'
+#define ENTER2      '\r'
 
 // bool values
 #define TRUE 1
 #define FALSE 0
 
 // buffer
-#define BUFFERSIZE 15
+#define BUFFERSIZE 255
 char buffer[BUFFERSIZE + 1];
 int bufferSize = 0;
 
 // cursor
 int cursorPositionX = 0;
+
+// save file
+void saveFile(){
+    char deuGood = open("output.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (deuGood == -1) return;
+    write(deuGood, buffer, bufferSize);
+    close(deuGood);
+}
 
 // configure the terminal
 void enableRawMode(struct termios *original){
@@ -178,6 +189,9 @@ void mainloop(){
         // if it's a valid char
         if (isValid != 1) continue;
 
+        // block the break line
+        if (letter == ENTER1 || letter == ENTER2) continue;
+
         // backspace
         if(letter == 8 || letter == 127){
             //remove the last char
@@ -227,7 +241,7 @@ int main(){
 
     //end
     disableRawMode(&original);
-
-    printf("\n - BUFFER: %s", buffer);
+    saveFile();
+    //printf("\n - BUFFER: %s", buffer);
     return 0;
 }
