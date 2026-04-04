@@ -1,6 +1,7 @@
 // libs
 #include <stdio.h>
 #include <termios.h>
+#include <unistd.h>
 
 // configure the terminal
 void enableRawMode(struct termios *original){
@@ -23,12 +24,22 @@ void desableRawMode(struct termios *original){
     return;
 }
 
+void readKey(){
+    char letter;
+    do{
+        read(STDIN_FILENO, &letter, 1);
+        write(STDOUT_FILENO, &letter, 1);
+    }while(letter != 'Q');
+    return;
+}
+
+
 // main funcition
 int main(){
     // start
     struct termios original;
     enableRawMode(&original);
-
+    readKey();
     //end
     desableRawMode(&original);
     return 0;
