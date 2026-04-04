@@ -3,6 +3,16 @@
 #include <termios.h>
 #include <unistd.h>
 
+// keys
+
+#define ESC 27
+#define UP_ARROW    'A'
+#define DOWN_ARROW  'B'
+#define RIGHT_ARROW 'C'
+#define LEFT_ARROW  'D'
+
+
+
 // configure the terminal
 void enableRawMode(struct termios *original){
     // save the orignal config
@@ -26,9 +36,54 @@ void desableRawMode(struct termios *original){
     return;
 }
 
+// print single char
+void print(char *data){
+    write(STDOUT_FILENO, data, 1);
+    return;
+}
 
-// get and write
-void readKey(){
+// backspace
+void backspaceFunction(){
+    write(STDOUT_FILENO, "\b \b", 3);
+    return;
+}
+
+//get the key
+char readKey(char *key){
+    return read(STDIN_FILENO, key, 1);
+}
+
+void arrows(){
+    char seq;
+    // get the next char of sequence
+    char isValid = readKey(&seq);
+    //if (isValid != 1) return;
+    switch(seq){
+    // up arrow
+    case UP_ARROW:
+        write(STDOUT_FILENO, "UP", 2);
+        break;
+    // down arrow
+    case DOWN_ARROW:
+        write(STDOUT_FILENO, "DOWN", 4);
+        break;
+    // right arrow
+    case RIGHT_ARROW:
+        write(STDOUT_FILENO, "RIG", 3);
+        break;
+    // left arrow
+    case LEFT_ARROW:
+        write(STDOUT_FILENO, "lef", 3);
+        break;
+        // error or other key not implemented yet
+    default:
+        write(STDOUT_FILENO, "err", 3);
+    }
+    return;
+}
+
+// mainloop
+void mainloop(){
     // vars
     char seq; //used if it needs a sequence
     char letter; // the main char
@@ -41,16 +96,15 @@ void readKey(){
         doWrite = 1;
 
         // read the main char
-        isValid = read(STDIN_FILENO, &letter, 1);
+        isValid = readKey(&letter);
 
         // if it's a valid char
-        if (isValid == 0) continue;
-        if (isValid == -1) break;
+        if (isValid != 1) continue;
 
         // backspace
         if(letter == 8 || letter == 127){
             //remove the last char
-            write(STDOUT_FILENO, "\b \b", 3);
+            backspaceFunction();
             doWrite = 0;
         }
 
@@ -58,41 +112,18 @@ void readKey(){
         if (letter == 27){
             doWrite = 0;
             // read the sequence
-            isValid = read(STDIN_FILENO, &seq, 1);
+            isValid =  readKey(&seq);
             // if it's just the esc
-            if (isValid == 0){keepIt = 0; continue;} // break the program
-            if (isValid == -1) break;
-
+            if (isValid != 1){keepIt = 0; continue;} // break the program
             // if it's not the esc
             if (seq == '['){
-                // get the next char of sequence
-                read(STDIN_FILENO, &seq, 1);
-                switch(seq){
-                // up arrow
-                case 'A':
-                    write(STDOUT_FILENO, "UP", 2);
-                    break;
-                // down arrow
-                case 'B':
-                    write(STDOUT_FILENO, "DOWN", 4);
-                    break;
-                // right arrow
-                case 'C':
-                    write(STDOUT_FILENO, "RIG", 3);
-                    break;
-                // left arrow
-                case 'D':
-                    write(STDOUT_FILENO, "lef", 3);
-                    break;
-                // error or other key not implemented yet
-                default:
-                    write(STDOUT_FILENO, "err", 3);
-                }
+                arrows();
             }
         }
 
         //Should I write it?
-        if (doWrite) write(STDOUT_FILENO, &letter, 1);
+        if (doWrite) print(&letter);
+
     }while(keepIt);
     return;
 }
@@ -103,7 +134,10 @@ int main(){
     // start
     struct termios original;
     enableRawMode(&original);
-    readKey();
+
+    // working
+    mainloop();
+
     //end
     desableRawMode(&original);
     return 0;
