@@ -46,6 +46,7 @@ void desableRawMode(struct termios *original){
 void print(){
     if (bufferPos > BUFFERSIZE) return;
     write(STDOUT_FILENO, "\r", 1);
+    write(STDOUT_FILENO, "\x1b[K", 3);
     write(STDOUT_FILENO, buffer, bufferPos + 1);
     return;
 }
@@ -61,8 +62,8 @@ void addChar(char *letter){
 // backspace
 void backspaceFunction(){
     if(bufferPos == 0) return;
-    buffer[bufferPos] = '\0';
     bufferPos --;
+    buffer[bufferPos] = '\0';
     return;
 }
 
