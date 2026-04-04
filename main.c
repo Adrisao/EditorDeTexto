@@ -16,7 +16,7 @@
 
 // buffer
 #define BUFFERSIZE 1023
-char buffer[BUFFESIZE + 1];
+char buffer[BUFFERSIZE + 1];
 int bufferPos = 0;
 
 // configure the terminal
@@ -123,6 +123,7 @@ void mainloop(){
         if(letter == 8 || letter == 127){
             //remove the last char
             backspaceFunction();
+            print();
             doWrite = FALSE;
         }
 
@@ -143,7 +144,10 @@ void mainloop(){
         }
 
         //Should I write it?
-        if (doWrite) print(&letter);
+        if (doWrite){
+            addChar(&letter);
+            print();
+        };
 
     }while(keepIt);
     return;
