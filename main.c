@@ -5,7 +5,7 @@
 // configure the terminal
 void enableRawMode(struct termios *original){
     // save the orignal config
-    tcgetattr(STDIN_FILEMO, original);
+    tcgetattr(STDIN_FILENO, original);
     // create and copy the config
     struct termios raw;
     raw = *original;
