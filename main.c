@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
+#include <string.h>
 
 // keys
 #define ESC 27
@@ -17,7 +18,10 @@
 // buffer
 #define BUFFERSIZE 1023
 char buffer[BUFFERSIZE + 1];
-int bufferPos = 0;
+int bufferSize = 1;
+
+// cursor
+int cursorPositionX = 0;
 
 // configure the terminal
 void enableRawMode(struct termios *original){
@@ -35,35 +39,60 @@ void enableRawMode(struct termios *original){
     return;
 }
 
+
 // Configure back the terminal
-void desableRawMode(struct termios *original){
+void disableRawMode(struct termios *original){
     // apply the original config
     tcsetattr(STDIN_FILENO, TCSAFLUSH, original);
     return;
 }
 
+// atulize the cursor position
+void attCursor(){
+    write(STDOUT_FILENO, "\r", 1);
+    for (int i = 0; i < cursorPositionX; i++) write(STDOUT_FILENO, "\x1b[C", 3);
+    return;
+}
+
+// move the letters
+void mov(){
+    for (int i = bufferSize; i > cursorPositionX; i--) buffer[i] = buffer[i - 1];
+    bufferSize ++;
+    attCursor();
+    return;
+}
+
+// move back the letters
+void movBack(){
+    for (int i = cursorPositionX; i > bufferSize; i++) buffer[i-1] = buffer[i];
+    bufferSize --;
+    attCursor();
+    return;
+}
+
 // print line
 void print(){
-    if (bufferPos > BUFFERSIZE) return;
+    if (bufferSize > BUFFERSIZE) return;
     write(STDOUT_FILENO, "\r", 1);
     write(STDOUT_FILENO, "\x1b[K", 3);
-    write(STDOUT_FILENO, buffer, bufferPos + 1);
+    write(STDOUT_FILENO, buffer, bufferSize);
     return;
 }
 
 void addChar(char *letter){
-    if (bufferPos > BUFFERSIZE) return;
-    buffer[bufferPos] = *letter;
-    bufferPos ++;
-    buffer[bufferPos] = '\0';
+    mov();
+    buffer[cursorPositionX] = *letter;
+    if (cursorPositionX < BUFFERSIZE) cursorPositionX ++;
+    attCursor();
     return;
 }
 
 // backspace
 void backspaceFunction(){
-    if(bufferPos == 0) return;
-    bufferPos --;
-    buffer[bufferPos] = '\0';
+    if(bufferSize == 0) return;
+    movBack();
+    cursorPositionX --;
+    attCursor();
     return;
 }
 
@@ -88,11 +117,16 @@ void arrows(){
         break;
     // right arrow
     case RIGHT_ARROW:
-        write(STDOUT_FILENO, "RIG", 3);
+        if (buffer[cursorPositionX] == '\0') break;
+        if (cursorPositionX >= 100) break;
+        cursorPositionX ++;
+        attCursor();
         break;
     // left arrow
     case LEFT_ARROW:
-        write(STDOUT_FILENO, "lef", 3);
+        if (cursorPositionX == 0) break;
+        cursorPositionX --;
+        attCursor();
         break;
         // error or other key not implemented yet
     default:
@@ -159,7 +193,7 @@ void mainloop(){
 int main(){
     // start
     buffer[0] = '\0';
-    buffer[BUFFERSIZE + 1] = '\0';
+    buffer[BUFFERSIZE] = '\0';
     struct termios original;
     // enable raw
     enableRawMode(&original);
@@ -168,7 +202,7 @@ int main(){
     mainloop();
 
     //end
-    desableRawMode(&original);
+    disableRawMode(&original);
 
     printf("\n - BUFFER: %s", buffer);
     return 0;
