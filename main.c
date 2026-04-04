@@ -18,7 +18,7 @@
 // buffer
 #define BUFFERSIZE 1023
 char buffer[BUFFERSIZE + 1];
-int bufferSize = 1;
+int bufferSize = 0;
 
 // cursor
 int cursorPositionX = 0;
@@ -56,17 +56,19 @@ void attCursor(){
 
 // move the letters
 void mov(){
+    if (bufferSize == BUFFERSIZE) return;
     for (int i = bufferSize; i > cursorPositionX; i--) buffer[i] = buffer[i - 1];
     bufferSize ++;
-    attCursor();
     return;
 }
 
 // move back the letters
 void movBack(){
-    for (int i = cursorPositionX; i > bufferSize; i++) buffer[i-1] = buffer[i];
+    if (bufferSize == 0) return;
+    int i;
+    for (i = cursorPositionX - 1; i < bufferSize; i++) buffer[i] = buffer[i+1];
     bufferSize --;
-    attCursor();
+    buffer[bufferSize] = '\0';
     return;
 }
 
@@ -76,6 +78,7 @@ void print(){
     write(STDOUT_FILENO, "\r", 1);
     write(STDOUT_FILENO, "\x1b[K", 3);
     write(STDOUT_FILENO, buffer, bufferSize);
+    attCursor();
     return;
 }
 
@@ -89,10 +92,9 @@ void addChar(char *letter){
 
 // backspace
 void backspaceFunction(){
-    if(bufferSize == 0) return;
+    if(bufferSize == 0 || cursorPositionX == 0) return;
     movBack();
     cursorPositionX --;
-    attCursor();
     return;
 }
 
