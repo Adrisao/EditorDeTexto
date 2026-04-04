@@ -11,6 +11,10 @@
 #define RIGHT_ARROW 'C'
 #define LEFT_ARROW  'D'
 
+// bool values
+
+#define TRUE 1
+#define FALSE 0
 
 
 // configure the terminal
@@ -87,13 +91,13 @@ void mainloop(){
     // vars
     char seq; //used if it needs a sequence
     char letter; // the main char
-    char doWrite = 1; // if I should write
-    char keepIt = 1; // continue te loop
+    char doWrite = TRUE; // if I should write
+    char keepIt = TRUE; // continue te loop
     int isValid; // if the key is valid
     // main loop
     do{
         // reset
-        doWrite = 1;
+        doWrite = TRUE;
 
         // read the main char
         isValid = readKey(&letter);
@@ -105,16 +109,19 @@ void mainloop(){
         if(letter == 8 || letter == 127){
             //remove the last char
             backspaceFunction();
-            doWrite = 0;
+            doWrite = FALSE;
         }
 
         //arrows and esc
-        if (letter == 27){
-            doWrite = 0;
+        if (letter == ESC){
+            doWrite = FALSE;
             // read the sequence
             isValid =  readKey(&seq);
-            // if it's just the esc
-            if (isValid != 1){keepIt = 0; continue;} // break the program
+            // if it's just the esc and break the program
+            if (isValid != 1){
+                keepIt = FALSE;
+                continue;
+                }
             // if it's not the esc
             if (seq == '['){
                 arrows();
