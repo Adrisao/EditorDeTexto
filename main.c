@@ -176,6 +176,22 @@ void arrows(){
     return;
 }
 
+void lookLinesFinal(){
+    int cont = 0;
+    for (int i = 1; i < BUFFERSIZE; i ++) if (char[i] == '\n'){
+        lines[cont] = i;
+        valiLine[cont] = 1;
+        cont ++;
+    } 
+    return;
+}
+
+// enter function processing
+void enterFunc(){
+    addChar('\n');
+    return;
+}
+
 // mainloop
 void mainloop(){
     // vars
@@ -183,9 +199,6 @@ void mainloop(){
     char letter; // the main char
     char doWrite = TRUE; // if I should write
     char keepIt = TRUE; // continue te loop
-    lines[0] = 0; //first line
-    validLine[0] = 1; // first line is valid
-    for (int i = 1; i < MAXLINES; i++) validLine[i] = 0; // others lines do not exist yet
     int isValid; // if the key is valid
     // main loop
     do{
@@ -242,6 +255,9 @@ int main(){
     buffer[0] = '\0';
     buffer[BUFFERSIZE] = '\0';
     struct termios original;
+    lines[0] = 0; //first line
+    validLine[0] = 1; // first line is valid
+    for (int i = 1; i < MAXLINES; i++) validLine[i] = 0; // others lines do not exist yet
     // enable raw
     enableRawMode(&original);
 
