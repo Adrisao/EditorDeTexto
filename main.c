@@ -103,12 +103,13 @@ void delMovBack(){
 void print(){
     if (bufferSize > BUFFERSIZE) return;
     write(STDOUT_FILENO, "\x1b[2J", 4);
-    //write(STDOUT_FILENO, "\x1b[K", 3);
+    write(STDOUT_FILENO, "\x1b[H", 3);
     write(STDOUT_FILENO, buffer, bufferSize);
     attCursor();
     return;
 }
 
+// add the char at the buffer
 void addChar(char *letter){
     mov();
     buffer[cursorPositionX] = *letter;
@@ -258,6 +259,7 @@ void mainloop(){
 int main(){
     // start
     buffer[0] = '\0';
+    print();
     buffer[BUFFERSIZE] = '\0';
     struct termios original;
     lines[0] = 0; //first line
