@@ -21,10 +21,16 @@
 // buffer
 #define BUFFERSIZE 255
 char buffer[BUFFERSIZE + 1];
+// the real buffer size
 int bufferSize = 0;
+// lines positions
+#define MAXLINES 20
+int lines[MAXLINES];
+char validLine[MAXLINES];
 
 // cursor
 int cursorPositionX = 0;
+int cursorPositionY = 0;
 
 // save file
 void saveFile(){
@@ -177,6 +183,9 @@ void mainloop(){
     char letter; // the main char
     char doWrite = TRUE; // if I should write
     char keepIt = TRUE; // continue te loop
+    lines[0] = 0; //first line
+    validLine[0] = 1; // first line is valid
+    for (int i = 1; i < MAXLINES; i++) validLine[i] = 0; // others lines do not exist yet
     int isValid; // if the key is valid
     // main loop
     do{
