@@ -102,8 +102,8 @@ void delMovBack(){
 // print line
 void print(){
     if (bufferSize > BUFFERSIZE) return;
-    write(STDOUT_FILENO, "\r", 1);
-    write(STDOUT_FILENO, "\x1b[K", 3);
+    write(STDOUT_FILENO, "\x1b[2J", 4);
+    //write(STDOUT_FILENO, "\x1b[K", 3);
     write(STDOUT_FILENO, buffer, bufferSize);
     attCursor();
     return;
@@ -178,9 +178,9 @@ void arrows(){
 
 void lookLinesFinal(){
     int cont = 0;
-    for (int i = 1; i < BUFFERSIZE; i ++) if (char[i] == '\n'){
+    for (int i = 1; i < BUFFERSIZE; i ++) if (buffer[i] == '\n'){
         lines[cont] = i;
-        valiLine[cont] = 1;
+        validLine[cont] = 1;
         cont ++;
     } 
     return;
@@ -188,7 +188,9 @@ void lookLinesFinal(){
 
 // enter function processing
 void enterFunc(){
-    addChar('\n');
+    char data = '\n';
+    addChar(&data);
+    print();
     return;
 }
 
@@ -212,7 +214,10 @@ void mainloop(){
         if (isValid != 1) continue;
 
         // block the break line
-        if (letter == ENTER1 || letter == ENTER2) continue;
+        if (letter == ENTER1 || letter == ENTER2){
+            enterFunc();
+            continue;
+        };
 
         // backspace
         if(letter == 8 || letter == 127){
