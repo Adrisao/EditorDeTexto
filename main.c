@@ -147,8 +147,12 @@ char readKey(char *key){
 
 void moveUp(){
     int i = virtualCursor;
+    int diff;
     while (i > 0 && buffer[i] != '\n') i --;
     if (i > 0) i --;
+    diff = virtualCursor - i;
+    while (i > 0 && buffer[i] != '\n') i --;
+    if (i != 0) i ++;
     //printf("i = %d.\n", i);
     virtualCursor = i;
     attCursor();
