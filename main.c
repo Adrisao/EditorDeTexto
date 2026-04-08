@@ -145,6 +145,16 @@ char readKey(char *key){
     return read(STDIN_FILENO, key, 1);
 }
 
+void moveUp(){
+    int i = virtualCursor;
+    while (i > 0 && buffer[i] != '\n') i --;
+    if (i > 0) i --;
+    //printf("i = %d.\n", i);
+    virtualCursor = i;
+    attCursor();
+    return;
+}
+
 // arrows and others keys
 void arrows(){
     char seq;
@@ -154,11 +164,13 @@ void arrows(){
     switch(seq){
     // up arrow
     case UP_ARROW:
-        write(STDOUT_FILENO, "UP", 2);
+        //write(STDOUT_FILENO, "UP", 2);
+        moveUp();
         break;
     // down arrow
     case DOWN_ARROW:
         write(STDOUT_FILENO, "DOWN", 4);
+        printf("Cursor: %d.\n", virtualCursor);
         break;
     // right arrow
     case RIGHT_ARROW:
@@ -261,6 +273,11 @@ void mainloop(){
 
 // main funcition
 int main(){
+    // save the terminal
+    write(STDOUT_FILENO, "\x1b[?1049h", 8);
+    write(STDOUT_FILENO, "\x1b[2J", 4);
+    write(STDOUT_FILENO, "\x1b[H", 3);
+
     // start
     buffer[0] = '\0';
     print();
@@ -273,10 +290,15 @@ int main(){
     enableRawMode(&original);
 
     // working
-        mainloop();
+    mainloop();
+
     //end
     disableRawMode(&original);
+
     saveFile();
+
+    // return to terminal
+    write(STDOUT_FILENO, "\x1b[?1049l", 8);
     //printf("\n - BUFFER: %s", buffer);
     return 0;
 }
