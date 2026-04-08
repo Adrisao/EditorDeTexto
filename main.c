@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <string.h>
 
 // keys
 #define ESC 27
@@ -28,9 +29,10 @@ int bufferSize = 0;
 int lines[MAXLINES];
 char validLine[MAXLINES];
 
-// cursor
-int cursorPositionX = 0;
-int cursorPositionY = 0;
+// cursor virtual
+int virtualCursor = 0;
+
+int visualCursor[2] = {1, 1};
 
 // save file
 void saveFile(){
@@ -56,7 +58,6 @@ void enableRawMode(struct termios *original){
     return;
 }
 
-
 // Configure back the terminal
 void disableRawMode(struct termios *original){
     // apply the original config
@@ -64,17 +65,30 @@ void disableRawMode(struct termios *original){
     return;
 }
 
-// atulize the cursor position
-void attCursor(){
-    write(STDOUT_FILENO, "\r", 1);
-    for (int i = 0; i < cursorPositionX; i++) write(STDOUT_FILENO, "\x1b[C", 3);
+void lookLinesFinal(){
+    visualCursor[0] = 0;
+    visualCursor[1] = 0;
+    for (int i = 0; i < virtualCursor; i ++){
+        if (buffer[i] == '\n'){
+            visualCursor[0] = 0;
+            visualCursor[1] ++;
+        }else visualCursor[0] ++;
+    }
     return;
+}
+
+// atulize the cursor position
+void attCursor() {
+    char text[32];
+    lookLinesFinal(); // X e Y base 0
+    sprintf(text, "\x1b[%d;%dH", visualCursor[1] + 1, visualCursor[0] + 1);
+    write(STDOUT_FILENO, text, strlen(text));
 }
 
 // move the letters for inserction
 void mov(){
     if (bufferSize == BUFFERSIZE) return;
-    for (int i = bufferSize; i > cursorPositionX; i--) buffer[i] = buffer[i - 1];
+    for (int i = bufferSize; i > virtualCursor; i--) buffer[i] = buffer[i - 1];
     bufferSize ++;
     return;
 }
@@ -83,7 +97,7 @@ void mov(){
 void movBack(){
     if (bufferSize == 0) return;
     int i;
-    for (i = cursorPositionX - 1; i < bufferSize; i++) buffer[i] = buffer[i+1];
+    for (i = virtualCursor - 1; i < bufferSize; i++) buffer[i] = buffer[i+1];
     bufferSize --;
     buffer[bufferSize] = '\0';
     return;
@@ -93,7 +107,7 @@ void movBack(){
 void delMovBack(){
     if (bufferSize == 0) return;
     int i;
-    for (i = cursorPositionX; i < bufferSize; i++) buffer[i] = buffer[i+1];
+    for (i = virtualCursor; i < bufferSize; i++) buffer[i] = buffer[i+1];
     bufferSize --;
     buffer[bufferSize] = '\0';
     return;
@@ -112,17 +126,17 @@ void print(){
 // add the char at the buffer
 void addChar(char *letter){
     mov();
-    buffer[cursorPositionX] = *letter;
-    if (cursorPositionX < BUFFERSIZE) cursorPositionX ++;
+    buffer[virtualCursor] = *letter;
+    if (virtualCursor < BUFFERSIZE) virtualCursor ++;
     attCursor();
     return;
 }
 
 // backspace
 void backspaceFunction(){
-    if(bufferSize == 0 || cursorPositionX == 0) return;
+    if(bufferSize == 0 || virtualCursor == 0) return;
     movBack();
-    cursorPositionX --;
+    virtualCursor --;
     return;
 }
 
@@ -148,15 +162,15 @@ void arrows(){
         break;
     // right arrow
     case RIGHT_ARROW:
-        if (cursorPositionX >= bufferSize) break;
-        if (cursorPositionX >= 100) break;
-        cursorPositionX ++;
+        if (virtualCursor >= bufferSize) break;
+        if (virtualCursor >= 100) break;
+        virtualCursor ++;
         attCursor();
         break;
     // left arrow
     case LEFT_ARROW:
-        if (cursorPositionX == 0) break;
-        cursorPositionX --;
+        if (virtualCursor == 0) break;
+        virtualCursor --;
         attCursor();
         break;
         //DEL key
@@ -164,7 +178,7 @@ void arrows(){
         isValid = readKey(&seq);
         if (isValid != 1) return;
         if (seq == '~'){
-            if(cursorPositionX == bufferSize) break;
+            if(virtualCursor == bufferSize) break;
            delMovBack();
            print();
            attCursor();
@@ -174,16 +188,6 @@ void arrows(){
     default:
         write(STDOUT_FILENO, "err", 3);
     }
-    return;
-}
-
-void lookLinesFinal(){
-    int cont = 0;
-    for (int i = 1; i < BUFFERSIZE; i ++) if (buffer[i] == '\n'){
-        lines[cont] = i;
-        validLine[cont] = 1;
-        cont ++;
-    } 
     return;
 }
 
@@ -269,8 +273,7 @@ int main(){
     enableRawMode(&original);
 
     // working
-    mainloop();
-
+        mainloop();
     //end
     disableRawMode(&original);
     saveFile();
