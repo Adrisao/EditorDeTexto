@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
-#include <string.h>
+#include <stdlib.h>
 
 // keys
 #define ESC 27
@@ -20,10 +20,13 @@
 #define FALSE 0
 
 // buffer
-#define BUFFERSIZE 2045
-char buffer[BUFFERSIZE + 1];
+//#define BUFFERSIZE 2045
+#define BUFFERINCREMENT 10
+char *buffer;
 // the real buffer size
 int bufferSize = 0;
+int bufferCapacity = 0;
+
 // lines positions
 #define MAXLINES 20
 int lines[MAXLINES];
@@ -65,6 +68,17 @@ void disableRawMode(struct termios *original){
     return;
 }
 
+//
+void reAloc(){
+    char *temp;
+    temp = realloc(buffer, BUFFERINCREMENT * sizeof(int) + bufferCapacity);
+    if (temp == NULL) return;
+    buffer = temp;
+    bufferCapacity += BUFFERINCREMENT * sizeof(char);
+    write(STDOUT_FILENO, "ALOCADO", 7);
+    return;
+}
+
 void lookLinesFinal(){
     visualCursor[0] = 0;
     visualCursor[1] = 0;
@@ -87,7 +101,7 @@ void attCursor() {
 
 // move the letters for inserction
 void mov(){
-    if (bufferSize == BUFFERSIZE) return;
+    if (bufferSize >= bufferCapacity - 1) reAloc();
     for (int i = bufferSize; i > virtualCursor; i--) buffer[i] = buffer[i - 1];
     bufferSize ++;
     return;
@@ -115,7 +129,7 @@ void delMovBack(){
 
 // print line
 void print(){
-    if (bufferSize > BUFFERSIZE) return;
+    if (bufferSize > bufferCapacity) return;
     write(STDOUT_FILENO, "\x1b[2J", 4);
     write(STDOUT_FILENO, "\x1b[H", 3);
     write(STDOUT_FILENO, buffer, bufferSize);
@@ -125,9 +139,10 @@ void print(){
 
 // add the char at the buffer
 void addChar(char *letter){
+    if(bufferSize >= bufferCapacity-1) reAloc();
     mov();
     buffer[virtualCursor] = *letter;
-    if (virtualCursor < BUFFERSIZE) virtualCursor ++;
+    if (virtualCursor < bufferCapacity) virtualCursor ++;
     attCursor();
     return;
 }
@@ -291,9 +306,13 @@ int main(){
     write(STDOUT_FILENO, "\x1b[H", 3);
 
     // start
+
+    // first buffer
+    buffer = malloc(BUFFERINCREMENT * sizeof(char));
+    bufferCapacity = BUFFERINCREMENT * sizeof(char);
     buffer[0] = '\0';
     print();
-    buffer[BUFFERSIZE] = '\0';
+    buffer[bufferCapacity - 1] = '\0';
     struct termios original;
     lines[0] = 0; //first line
     validLine[0] = 1; // first line is valid
