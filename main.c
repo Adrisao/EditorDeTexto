@@ -20,7 +20,7 @@
 #define FALSE 0
 
 // buffer
-#define BUFFERSIZE 255
+#define BUFFERSIZE 2045
 char buffer[BUFFERSIZE + 1];
 // the real buffer size
 int bufferSize = 0;
@@ -145,15 +145,23 @@ char readKey(char *key){
     return read(STDIN_FILENO, key, 1);
 }
 
+// up arrow key function
 void moveUp(){
     int i = virtualCursor;
-    int diff;
     while (i > 0 && buffer[i] != '\n') i --;
     if (i > 0) i --;
-    diff = virtualCursor - i;
     while (i > 0 && buffer[i] != '\n') i --;
     if (i != 0) i ++;
-    //printf("i = %d.\n", i);
+    virtualCursor = i;
+    attCursor();
+    return;
+}
+
+void moveDown(){
+    int i = virtualCursor;
+    int diff;
+    while(i < bufferSize && buffer[i] != '\n') i ++;
+    if (i < bufferSize) i ++;
     virtualCursor = i;
     attCursor();
     return;
@@ -173,13 +181,13 @@ void arrows(){
         break;
     // down arrow
     case DOWN_ARROW:
-        write(STDOUT_FILENO, "DOWN", 4);
-        printf("Cursor: %d.\n", virtualCursor);
+        //write(STDOUT_FILENO, "DOWN", 4);
+        //printf("Cursor: %d.\n", virtualCursor);
+        moveDown();
         break;
     // right arrow
     case RIGHT_ARROW:
         if (virtualCursor >= bufferSize) break;
-        if (virtualCursor >= 100) break;
         virtualCursor ++;
         attCursor();
         break;
